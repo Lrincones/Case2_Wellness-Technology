@@ -1,0 +1,208 @@
+---
+title: "Analyze"
+author: "Luis Rincones"
+date: "7/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+Code for the process phase, assume the data frames are available in the global environment of the Project.
+
+Libraries load
+
+```{r libraries, echo=FALSE}
+library("readr")
+library("tools")
+library("fs")
+library("dplyr")
+library("tidyverse")
+library("stringr")
+library("janitor")
+```
+##Analyze
+*Guiding questions* 
+* How should you organize your data to perform analysis on it?<br> 
+* Has your data been properly formatted?<br>
+* What surprises did you discover in the data?<br> 
+* What trends or relationships did you find in the data?<br> 
+* How will these insights help answer your business questions?<br>
+
+*Key tasks*
+1. Aggregate your data so it’s useful and accessible<br> 
+2. Organize and format your data<br> 
+3. Perform calculations<br> 
+4. Identify trends and relationships<br>
+
+*Deliverable A summary of your analysis*
+
+To get started in R
+Here is a sample starter script that can help you do the following:
+1.Begin importing your data. DONE
+2.Explore your data, gathering some summary statistics DONE
+3.Clean and transform your data to prepare for analysis DONE
+4.Create some initial exploratory visualizations DONE
+
+
+
+\newpage
+## lo que tenia antes
+
+
+**Ya tengo los diferentes dataframes ahora que hago?**<br>
+
+Archivos combinados usando merge<br>
+* metnarrow_calories<br>
+* day_steps_sleep<br>
+* dailyact_true_heart<br>
+* dailyact_true_sleep<br>
+* dailyact_true_weight<br> 
+* dailyact_true_METs<br>
+
+Merging files and subsetting sets
+
+```{r combinar_merge, echo=FALSE}
+metnarrow_calories <- merge(minuteMETsNarrow, minuteCaloriesNarrow, all=TRUE)
+n_distinct(minuteMETsNarrow$Id)
+
+day_steps_sleep <- merge(dailySteps, sleepDay, all = TRUE)
+n_distinct(dailySteps$Id)
+
+dailyact_true_heart <- merge(copy_dailyActivity_TRUE, heartrate, by="Id")
+n_distinct(dailyact_true_heart$Id)
+dailyact_true_sleep <- merge(copy_dailyActivity_TRUE, sleepDay, by="Id")
+n_distinct(dailyact_true_sleep$Id)
+dailyact_true_weight <- merge(copy_dailyActivity_TRUE, weightLogInfo, by="Id")
+n_distinct(dailyact_true_weight$Id)
+dailyact_true_METs<- merge(copy_dailyActivity_TRUE, minuteMETsNarrow, by="Id")
+n_distinct(dailyact_true_METs$Id)
+
+# copy to work MAYBE CAN ELIMINATE AND RELOAD IF NEEDED
+# make a copy to work with
+copy_dailyActivity <- dailyActivity
+
+# create a column for the total of minutes used
+copy_dailyActivity <-    copy_dailyActivity %>% 
+  mutate(total = VeryActiveMinutes + FairlyActiveMinutes +
+                        LightlyActiveMinutes + SedentaryMinutes)
+# create a column "valido" boolean to check if total is 1440 minutes or not
+copy_dailyActivity <- copy_dailyActivity %>% 
+  mutate(valido = total == 1440)
+   
+# Two data frames to facilitate work 
+copy_dailyActivity_TRUE <- subset(copy_dailyActivity, valido == TRUE)
+copy_dailyActivity_FALSE <- subset(copy_dailyActivity, valido == FALSE)
+
+
+
+```
+All graphs together
+
+```{r graphs, echo=FALSE}
+# graficar para ver tendencia
+ggplot(data = metnarrow_calories) +
+        geom_point(aes(x=METs, y=Calories), color = "blue", alpha = 0.5) +
+        labs(title = "Relation between METs and Calories", x = "METs", y = "Calories")
+# No hay relacion al menos visual
+
+ggplot(data = day_steps_sleep) +
+        geom_point(aes(x=StepTotal, y=TotalMinutesAsleep), color = "red", alpha = 0.5) +
+        labs(title = "Relation between Steps and Sleep", x = "Steps", y = "Minutes_Sleep")
+
+# plotting the full day group
+ggplot(data = copy_dailyActivity_TRUE) +
+        geom_point(aes(x=TotalSteps, y=Calories), color = "blue", alpha = 0.5) +
+        labs(title = "Relation between Steps and Calories", x = "Steps", y = "Calories")
+
+ggplot(data = copy_dailyActivity_FALSE) +
+        geom_point(aes(x=TotalSteps, y=Calories), color = "red", alpha = 0.5) +
+        labs(title = "Relation between Steps and Calories", x = "Steps", y = "Calories")
+
+ggplot(data = dailyact_true_sleep) +
+      geom_point(aes(x=TotalSteps, y=TotalMinutesAsleep), color = "purple", alpha = 0.5) +
+        labs(title = "Relation between Steps and Sleep", x = "Steps", y = "Sleep in Minutes")
+
+ggplot(data = dailyact_true_weight) +
+      geom_point(aes(x=BMI, y=SedentaryMinutes), color = "orange", alpha = 0.5) +
+        labs(title = "Relation between Sedentary and BMI", x = "BMI", y = "Sedentary  Minutes")
+
+```
+
+```{r correlation, echo=FALSE}
+# computing the correlation for the two groups with Calories
+cor(copy_dailyActivity_TRUE$TotalSteps, copy_dailyActivity_TRUE$Calories)
+
+cor(copy_dailyActivity_FALSE$TotalSteps, copy_dailyActivity_FALSE$Calories)
+
+
+# Correlation total steps vs heart rate
+cor(dailyact_true_heart$TotalSteps, dailyact_true_heart$Value)
+#  0.05 low correlation
+
+# correlation total steps vs TotalMinutesAsleep
+cor(dailyact_true_sleep$TotalSteps, dailyact_true_sleep$TotalMinutesAsleep)
+# negative correlation  -0.2549887
+
+# correlation total steps vs weightKg 
+cor(dailyact_true_weight$TotalSteps, dailyact_true_weight$WeightKg)
+# low correlation  0.1238845
+
+# correlation total steps vs METs
+cor(dailyact_true_METs$TotalSteps, dailyact_true_METs$METs)
+# low correlation  0.1393237
+
+# Correlation within dailyActivity total steps vs Calories
+cor(dailyact_true_METs$TotalSteps, dailyact_true_METs$Calories)
+# High correlation  0.7323676
+
+
+cor(dailyact_true_weight$WeightKg, dailyact_true_weight$Calories)
+
+```
+* Summaries all together
+
+```{r summary_dailyactivity, echo=FALSE}
+# for dailyActivity
+dailyActivity %>%  
+  select(TotalSteps,
+         TotalDistance,
+         SedentaryMinutes) %>%
+  summary()
+
+# For the sleepDay dataframe:
+sleepDay %>%  
+  select(TotalSleepRecords,
+  TotalMinutesAsleep,
+  TotalTimeInBed) %>%
+  summary()
+
+```
+
+
+
+*dailyActivity*
+dailyActivity, check records that add to full day vs  records that do not<br>
+How do the correlation with steps behave for the two groups<br>
+
+Records that do not add to a full day, have a more disperse correlation between totalsteps and calories
+The correlations values are 0.733 when the records have a full day
+and 0.46 when the records do not have a full day
+
+
+Merged dailyActitivity and the files heart rate, sleepDay and weightLogInfo to review correlations<br>
+The group with full day.
+
+
+
+Now you can explore some different relationships between activity and sleep as well. 
+For example, do you think participants who sleep more also take more steps or fewer steps per day?
+check chunk merge_3, negative correlation  -0.2549887
+Check Graph and correlation in the next chunk
+
+Is there a relationship at all? How could these answers help inform the marketing strategy of how you position this new product?
+
+This is just one example of how to get started with this data - there are many other files and questions to explore as well!
+
+
+

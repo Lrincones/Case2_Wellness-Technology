@@ -1,0 +1,302 @@
+---
+title: "Process"
+author: "Luis Rincones"
+date: "7/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+Code for the process phase, assume the data frames are available in the global environment of the Project.
+
+Libraries load
+
+```{r libraries, echo=FALSE}
+library("readr")
+library("tools")
+library("fs")
+library("dplyr")
+library("tidyverse")
+library("stringr")
+library("janitor")
+```
+##Process
+
+
+*Working with a Data Frame per File loaded*<br>
+
+Prepare a Data frame "df_ID" with3 variables to assist Process phase<br>
+1. IDs for the number of records in the file<br> 
+2. Unique_IDs for the number of unique IDs in the file<br>
+3. File for the file name<br>
+
+Next 3 chunks one for each the above variable<br>
+
+First one for the file name
+```{r verify_users, echo=FALSE}
+columnas <- c("IDs", "Unique_IDs", "File")
+df_ID_file <- data.frame(matrix(nrow = 18, ncol = length(columnas)))
+colnames(df_ID_file) <- columnas
+df_ID_file$File[1] <- "dailyActivity"
+df_ID_file$File[2] <- "dailyCalories"
+df_ID_file$File[3] <- "dailyIntensities"
+df_ID_file$File[4] <- "dailySteps"
+df_ID_file$File[5] <- "heartrate"
+df_ID_file$File[6] <- "hourlyCalories"
+df_ID_file$File[7] <- "hourlyIntensities"
+df_ID_file$File[8] <- "hourlySteps"
+df_ID_file$File[9] <- "minuteCaloriesNarrow"
+df_ID_file$File[10] <- "minuteCaloriesWide"
+df_ID_file$File[11] <- "minuteIntensitiesNarrow"
+df_ID_file$File[12] <- "minuteIntensitiesWide"
+df_ID_file$File[13] <- "minuteMETsNarrow"
+df_ID_file$File[14] <- "minuteSleep"
+df_ID_file$File[15] <- "minuteStepsNarrow"
+df_ID_file$File[16] <- "minuteStepsWide"
+df_ID_file$File[17] <- "sleepDay"
+df_ID_file$File[18] <- "weightLogInfo"
+
+```
+
+Second for the Number of records<br>
+
+```{r num_records, echo=FALSE}
+
+df_ID_file$IDs[1] <- nrow(dailyActivity)
+df_ID_file$IDs[2] <- nrow(dailyCalories)
+df_ID_file$IDs[3] <- nrow(dailyIntensities)
+df_ID_file$IDs[4] <- nrow(dailySteps)
+df_ID_file$IDs[5] <- nrow(heartrate)
+df_ID_file$IDs[6] <- nrow(hourlyCalories)
+df_ID_file$IDs[7] <- nrow(hourlyIntensities)
+df_ID_file$IDs[8] <- nrow(hourlySteps)
+df_ID_file$IDs[9] <- nrow(minuteCaloriesNarrow)
+df_ID_file$IDs[10] <- nrow(minuteCaloriesWide)
+df_ID_file$IDs[11] <- nrow(minuteIntensitiesNarrow)
+df_ID_file$IDs[12] <- nrow(minuteIntensitiesWide)
+df_ID_file$IDs[13] <- nrow(minuteMETsNarrow)
+df_ID_file$IDs[14] <- nrow(minuteSleep)
+df_ID_file$IDs[15] <- nrow(minuteStepsNarrow)
+df_ID_file$IDs[16] <- nrow(minuteStepsWide)
+df_ID_file$IDs[17] <- nrow(sleepDay)
+df_ID_file$IDs[18] <- nrow(weightLogInfo)
+
+```
+Third for the number of Unique users<br>
+
+
+```{r unique_users, echo=FALSE}
+
+df_ID_file$Unique_IDs[1] <- length(unique(dailyActivity$Id))
+df_ID_file$Unique_IDs[2] <- length(unique(dailyCalories$Id))
+df_ID_file$Unique_IDs[3] <- length(unique(dailyIntensities$Id))
+df_ID_file$Unique_IDs[4] <- length(unique(dailySteps$Id))
+df_ID_file$Unique_IDs[5] <- length(unique(heartrate$Id))
+df_ID_file$Unique_IDs[6] <- length(unique(hourlyCalories$Id))
+df_ID_file$Unique_IDs[7] <- length(unique(hourlyIntensities$Id))
+df_ID_file$Unique_IDs[8] <- length(unique(hourlySteps$Id))
+df_ID_file$Unique_IDs[9] <- length(unique(minuteCaloriesNarrow$Id))
+df_ID_file$Unique_IDs[10] <- length(unique(minuteCaloriesWide$Id))
+df_ID_file$Unique_IDs[11] <- length(unique(minuteIntensitiesNarrow$Id))
+df_ID_file$Unique_IDs[12] <- length(unique(minuteIntensitiesWide$Id))
+df_ID_file$Unique_IDs[13] <- length(unique(minuteMETsNarrow$Id))
+df_ID_file$Unique_IDs[14] <- length(unique(minuteSleep$Id))
+df_ID_file$Unique_IDs[15] <- length(unique(minuteStepsNarrow$Id))
+df_ID_file$Unique_IDs[16] <- length(unique(minuteStepsWide$Id))
+df_ID_file$Unique_IDs[17] <- length(unique(sleepDay$Id))
+df_ID_file$Unique_IDs[18] <- length(unique(weightLogInfo$Id))
+
+```
+Check the generate Data frame "df_ID for the information generated
+```{r files_numbers, echo=FALSE}
+
+tibble(df_ID_file)
+```
+
+*Findings from the Process so far*<br>
+Files with few IDs<br>
+
+heartrate --> 14 IDs
+weightLogInfo --> 8 IDs
+
+Reviewing the sleep files<br> 
+minuteSleep --> 24 IDs<br>
+sleepDay --> 24 IDs <br>
+<br>
+Review number of dates in the file by minutes and the file by days
+number of dates in by minutes file is 15<br>
+number of dates in by day is 14<br>
+I will use the sleepDay the information aligns better with daylyActivity.<br>
+
+
+
+```{r sleep_users, echo=FALSE}
+
+length(unique(as.Date(minuteSleep$date)))
+length(unique(as.Date(sleepDay$SleepDay)))
+
+```
+
+
+Merge files as part of the organize tasks, preparing files for the analyze phase 
+```{r combinar_merge, echo=FALSE}
+metnarrow_calories <- merge(minuteMETsNarrow, minuteCaloriesNarrow, all=TRUE)
+n_distinct(minuteMETsNarrow$Id)
+
+day_steps_sleep <- merge(dailySteps, sleepDay, all = TRUE)
+n_distinct(dailySteps$Id)
+
+```
+
+*dailyActivity*
+As part of the cleaning process
+dailyActivity, check records that add to full day vs  records that do not<br>
+How do the correlation with steps behave for the two groups<br>
+
+Records that do not add to a full day, have a more disperse correlation between totalsteps and calories
+The correlations values are 0.733 when the records have a full day
+and 0.46 when the records do not have a full day
+
+The analysis done was to suport using a smaller dailyActivity set
+
+```{r daylyAct_records, echo=FALSE}
+# make a copy to work with
+copy_dailyActivity <- dailyActivity
+
+# create a column for the total of minutes used
+copy_dailyActivity <-    copy_dailyActivity %>% 
+  mutate(total = VeryActiveMinutes + FairlyActiveMinutes +
+                        LightlyActiveMinutes + SedentaryMinutes)
+# create a column "valido" boolean to check if total is 1440 minutes or not
+copy_dailyActivity <- copy_dailyActivity %>% 
+  mutate(valido = total == 1440)
+   
+# Two data frames to facilitate work 
+# most of the IDs are in each group 33 vs 28 logged activities at 0 in both sets
+copy_dailyActivity_TRUE <- subset(copy_dailyActivity, valido == TRUE)
+copy_dailyActivity_FALSE <- subset(copy_dailyActivity, valido == FALSE)
+
+# plotting the full day group
+ggplot(data = copy_dailyActivity_TRUE) +
+        geom_point(aes(x=TotalSteps, y=Calories), color = "blue", alpha = 0.5) +
+        labs(title = "Relation between Steps and Calories", x = "Steps", y = "Calories")
+
+ggplot(data = copy_dailyActivity_FALSE) +
+        geom_point(aes(x=TotalSteps, y=Calories), color = "red", alpha = 0.5) +
+        labs(title = "Relation between Steps and Calories", x = "Steps", y = "Calories")
+
+# computing the correlation for the two groups with Calories
+cor(copy_dailyActivity_TRUE$TotalSteps, copy_dailyActivity_TRUE$Calories)
+
+cor(copy_dailyActivity_FALSE$TotalSteps, copy_dailyActivity_FALSE$Calories)
+
+
+```
+Continuing merging the files for the Analyze phase
+
+Merged dailyActitivity and the files heart rate, sleepDay and weightLogInfo <br>
+
+
+```{r merge_3, echo=FALSE}
+# dailyact_true_heart not to be used
+#dailyact_true_heart <- merge(copy_dailyActivity_TRUE, heartrate, by="Id")
+# dailyact_true_sleep not using it using the subsets by sleep level
+#dailyact_true_sleep <- merge(copy_dailyActivity_TRUE, sleepDay, by="Id")
+# dailyact_true_weight not to be used
+#dailyact_true_weight <- merge(copy_dailyActivity_TRUE, weightLogInfo, by="Id")
+# dailyact_true_METs not to be used
+#dailyact_true_METs<- merge(copy_dailyActivity_TRUE, minuteMETsNarrow, by="Id")
+
+
+
+```
+OJO 
+The values you see for minuteData (1, 2, 3) represent: 1 ("asleep"), 2 ("restless"), or 3 ("awake").
+
+```{r minute_values, echo=FALSE}
+# visualize calories vs sleeo level
+# first create the subsets by sleep level then merge it with daily activity true
+
+# similar visualizacion check the correlations below
+# Awake
+minutesSleep_3 <- minuteSleep %>% 
+  subset(minuteSleep$value == 3)
+dailyact_true_sleep3 <- merge(copy_dailyActivity_TRUE, minutesSleep_3, by="Id")
+
+ggplot(data = dailyact_true_sleep3) +
+        geom_point(aes(x=TotalSteps, y=Calories), color = "red", alpha = 0.5) +
+        labs(title = "Relation between Steps and Calories for sleep=3", x = "Steps", y = "Calories")
+# Restless
+minutesSleep_2 <- minuteSleep %>% 
+  subset(minuteSleep$value == 2)
+dailyact_true_sleep2 <- merge(copy_dailyActivity_TRUE, minutesSleep_2, by="Id")
+
+ggplot(data = dailyact_true_sleep2) +
+        geom_point(aes(x=TotalSteps, y=Calories), color = "blue", alpha = 0.5) +
+        labs(title = "Relation between Steps and Calories for sleep=2", x = "Steps", y = "Calories")
+# Asleep
+minutesSleep_1 <- minuteSleep %>% 
+  subset(minuteSleep$value == 1)
+dailyact_true_sleep1 <- merge(copy_dailyActivity_TRUE, minutesSleep_1, by="Id")
+
+ggplot(data = dailyact_true_sleep1) +
+        geom_point(aes(x=TotalSteps, y=Calories), color = "orange", alpha = 0.5) +
+        labs(title = "Relation between Steps and Calories for sleep=1", x = "Steps", y = "Calories")
+
+# correlations 1 ("asleep"), 2 ("restless"), or 3 ("awake"). 
+cor(dailyact_true_sleep1$TotalSteps, dailyact_true_sleep1$Calories)
+# 0.6243699
+cor(dailyact_true_sleep2$TotalSteps, dailyact_true_sleep2$Calories)
+# 0.4168209
+cor(dailyact_true_sleep3$TotalSteps, dailyact_true_sleep3$Calories)
+# 0.7388277
+
+# computing the correlation no sleep levels vs  Calories
+cor(copy_dailyActivity_TRUE$TotalSteps, copy_dailyActivity_TRUE$Calories)
+# 0.7294708
+
+```
+
+
+*Look for what Sršen told to do*
+Sršen tells you that this data set might have some limitations, and encourages you to consider adding another data to help address those limitations as you begin to work more with this data.
+
+Cual data esta disponible para complementar 
+
+Verificar Data set fitbt Expirement downloaded from Data.World
+
+```{r DataWorld, echo=FALSE}
+Fitbit_DataWorld <- read.csv("Fitbit Experiment.csv")
+
+```
+
+
+Summary statistics
+
+```{r summary_stats}
+sleepDay %>%  
+  select(TotalSleepRecords,
+  TotalMinutesAsleep,
+  TotalTimeInBed) %>%
+  summary()
+
+dailyActivity %>%  
+  select(TotalSteps,
+         TotalDistance,
+         SedentaryMinutes) %>%
+  summary()
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
